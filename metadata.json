@@ -1,0 +1,6 @@
+{
+  "name": "VibeAI",
+  "description": "Master Essential AI Skills to Future-Proof Yourself in 2026 — Interactive Skill Matrix, Practice Sandbox, and Gemini AI Copilot",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
