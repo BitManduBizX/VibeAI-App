@@ -131,7 +131,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // 3. API Key Management
   const [apiKey, setApiKeyState] = useState<string>(() => {
-    return localStorage.getItem(API_KEY_STORAGE) || '';
+    return (
+      (import.meta.env.VITE_GEMINI_API_KEY as string | undefined) ||
+      localStorage.getItem(API_KEY_STORAGE) ||
+      ''
+    );
   });
 
   const setApiKey = (key: string) => {

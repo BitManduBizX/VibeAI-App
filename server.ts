@@ -22,7 +22,7 @@ app.get('/healthz', (_req: Request, res: Response) => {
 function getGeminiClient(clientApiKey?: string): GoogleGenAI | null {
   const apiKey = (clientApiKey && clientApiKey.trim().length > 0)
     ? clientApiKey.trim()
-    : process.env.GEMINI_API_KEY;
+    : (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY);
 
   if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey.trim() === '') {
     return null;
@@ -40,10 +40,11 @@ function getGeminiClient(clientApiKey?: string): GoogleGenAI | null {
 
 // Status endpoint
 app.get('/api/status', (_req: Request, res: Response) => {
+  const activeKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
   const serverKeyAvailable = Boolean(
-    process.env.GEMINI_API_KEY &&
-    process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY' &&
-    process.env.GEMINI_API_KEY.trim().length > 0
+    activeKey &&
+    activeKey !== 'MY_GEMINI_API_KEY' &&
+    activeKey.trim().length > 0
   );
   res.json({
     status: 'online',
@@ -474,20 +475,21 @@ Return JSON matching this schema:
 
 // Setup Vite in Dev or Static Serving in Prod
 async function startServer() {
-  if (!isProduction) {
+  const distPath = path.resolve(process.cwd(), 'dist');
+  const distExists = fs.existsSync(distPath) && fs.existsSync(path.join(distPath, 'index.html'));
+
+  if (isProduction && distExists) {
+    app.use(express.static(distPath));
+    app.get('*', (_req: Request, res: Response) => {
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  } else {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
+      base: '/',
     });
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.resolve(process.cwd(), 'dist');
-    if (fs.existsSync(distPath)) {
-      app.use(express.static(distPath));
-      app.get('*', (_req: Request, res: Response) => {
-        res.sendFile(path.join(distPath, 'index.html'));
-      });
-    }
   }
 
   app.listen(port, '0.0.0.0', () => {
